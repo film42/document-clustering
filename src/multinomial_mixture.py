@@ -2,8 +2,7 @@ from random import randint
 import numpy as np
 import math
 
-np.set_printoptions(suppress=True)
-np.set_printoptions(precision=4)
+np.set_printoptions(suppress=True, precision=4)
 
 """
 These methods are util replacements for numpy methods or numpy methods themselves (from source).
@@ -39,7 +38,7 @@ def nm_gammaln(n):
 
 
 def random_normalized_vector(n):
-    frequency_vector = [randint(1, 100) for _ in range(0, n)]
+    frequency_vector = [randint(1, 10) for _ in range(0, n)]
     sum_of_frequencies = sum(frequency_vector)
     normalized_vector = [x / float(sum_of_frequencies) for x in frequency_vector]
     return normalized_vector

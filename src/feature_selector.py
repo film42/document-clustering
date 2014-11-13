@@ -40,7 +40,7 @@ class BuildModel:
         for document, words in self.documents.iteritems():
             count_vector = {}
             print "Doc %s" % document
-            for corpus_word in self.corpus.keys()[:300]:
+            for corpus_word in self.corpus.keys():
                 # Count the number of times the word in the corpus occurs in the document
                 count_vector[corpus_word] = words.count(corpus_word)
             # Save the corpus vector
