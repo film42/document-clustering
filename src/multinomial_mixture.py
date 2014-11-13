@@ -2,14 +2,40 @@ from random import randint
 import numpy as np
 import math
 
+np.set_printoptions(suppress=True)
+np.set_printoptions(precision=4)
+
 """
-These methods are util replacements for numpy methods so we can use pypy to JIT
-optimize this section. This also includes other utils methods.
+These methods are util replacements for numpy methods or numpy methods themselves (from source).
+This also includes other utils methods.
 """
+
+
+def np_logsumexp(a, axis=None, b=None):
+    """
+    Taken from the numpy source
+    """
+    a = np.asarray(a)
+    if axis is None:
+        a = a.ravel()
+    else:
+        a = np.rollaxis(a, axis)
+    a_max = a.max(axis=0)
+    if b is not None:
+        b = np.asarray(b)
+        if axis is None:
+            b = b.ravel()
+        else:
+            b = np.rollaxis(b, axis)
+        out = np.log(np.sum(b * np.exp(a - a_max), axis=0))
+    else:
+        out = np.log(np.sum(np.exp(a - a_max), axis=0))
+    out += a_max
+    return out
 
 
 def random_normalized_vector(n):
-    frequency_vector = [randint(0, 100) for _ in range(0, n)]
+    frequency_vector = [randint(1, 100) for _ in range(0, n)]
     sum_of_frequencies = sum(frequency_vector)
     normalized_vector = [x / float(sum_of_frequencies) for x in frequency_vector]
     return normalized_vector
@@ -24,7 +50,7 @@ def nm_subtract(arr1, arr2):
 
 
 def nm_exp(arr):
-    return [x ** 2 for x in arr]
+    return np.array([x ** 2 for x in arr])
 
 
 def nm_log(matrix):
@@ -55,50 +81,38 @@ def nm_sum_transpose(matrix):
     return [sum(vector) for vector in matrix]
 
 
-def nm_logsumexp(lnv):
-    """
-    Sum exp(item) for item in lnv (log-normal vector) without overflow.
-    SOURCE: https://github.com/ekg/freebayes/blob/master/python/logsumexp.py
-    """
-    n = lnv[0]
-    maxAbs = n
-    minN = n
-    maxN = n
-    c = n
-    for item in lnv[1:]:
-        n = item
-        if n > maxN:
-            maxN = n
-        if abs(n) > maxAbs:
-            maxAbs = abs(n)
-        if n < minN:
-            minN = n
-    if maxAbs > maxN:
-        c = minN
-    else:
-        c = maxN
-    return c + math.log(sum([math.exp(i - c) for i in lnv]))
-
-
 """
 The Multinomial Mixture model section implements the EM algorithm generically
 """
 
 
 class MultinomialMixture:
-    def __init__(self, n_clusters, count_vectors, n_iterations=None, verbose=False):
-        self.count_vectors = count_vectors
+    def __init__(self, n_clusters, count_vectors, n_iterations=None, verbose=False, lambda_values=None,
+                 beta_matrix=None):
+
+        self.count_vectors = np.array(count_vectors)
         self.vocabulary_size = len(count_vectors[0])
         self.n_clusters = n_clusters
         self.n_iterations = n_iterations
         self.verbose = verbose
+        self.a, self.b = self.count_vectors.shape
 
         # Huh?
         self.n = sum(self.count_vectors[0])
-        self.log_factorial_n = math.log(math.factorial(self.n))
+        self.log_factorial_n = math.log(abs(math.factorial(self.n)))
 
-        self.lambda_value = self.generate_lambda()
-        self.beta_matrix = self.generate_beta_matrix()
+        if lambda_values:
+            self.lambda_value = np.array(lambda_values)
+        else:
+            self.lambda_value = np.array(self.generate_lambda())
+
+        if beta_matrix:
+            self.beta_matrix = np.array(beta_matrix)
+        else:
+            self.beta_matrix = np.array(self.generate_beta_matrix())
+
+        if self.verbose:
+            self.intermediate_data = []
 
     def generate_lambda(self):
         """
@@ -113,13 +127,11 @@ class MultinomialMixture:
         return [random_normalized_vector(self.vocabulary_size) for _ in range(0, self.n_clusters)]
 
     def log_joint_probabilities(self):
-        # TODO: Remove NumPy
-        a = np.log(np.array(self.lambda_value)).reshape((self.n_clusters, 1))
-        b = np.log(np.array(self.beta_matrix)).dot(np.array(self.count_vectors).T)
+        a = np.log(self.lambda_value).reshape((self.n_clusters, 1))
+        b = np.log(self.beta_matrix).dot(self.count_vectors.T)
         return a + b
 
     def expected_count_totals(self, probabilities):
-        # TODO: Remove NumPy
         return probabilities.dot(self.count_vectors), probabilities.sum(axis=1)
 
     def learn_parameters(self):
@@ -128,12 +140,14 @@ class MultinomialMixture:
             log_probabilities = self.log_joint_probabilities()
             log_likelihood = self.log_likelihood(log_probabilities)
 
-            print log_probabilities
-            return
-
-            # normalize the log posteriors TODO: Fix this
-            log_probabilities -= nm_logsumexp(log_probabilities)
+            # normalize the log posteriors
+            log_probabilities -= np_logsumexp(log_probabilities)
             probabilities = nm_exp(log_probabilities)
+
+            # Verbose statements from the TAs
+            if self.verbose:
+                self.intermediate_data.append(
+                    np.hstack((i, self.lambda_value[0], self.beta_matrix[:, 0], probabilities[0], log_likelihood)))
 
             # get expected count totals
             counts1, counts2 = self.expected_count_totals(probabilities)
@@ -142,17 +156,16 @@ class MultinomialMixture:
             self.lambda_value = counts2 / self.a
             self.beta_matrix = counts1 / counts1.sum(axis=1).reshape((self.n_clusters, 1))
 
-            # if self.verbose:
-            # print np.array(self.intermediate_data)
+            # Verbose statements from the TAs
+            if self.verbose:
+                print np.array(self.intermediate_data)
 
     def log_likelihood(self, log_probabilities):
         log_factorial_matrix = nm_log(nm_factorial(self.count_vectors))
         a = nm_add_scalar(self.log_factorial_n, log_probabilities)
         b = nm_subtract(a, nm_sum_transpose(log_factorial_matrix))
 
-        print b
-
-        return sum(nm_logsumexp(b))
+        return np_logsumexp(b).sum()
 
 
 if __name__ == '__main__':
