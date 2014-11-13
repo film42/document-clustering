@@ -35,7 +35,7 @@ def np_logsumexp(a, axis=None, b=None):
 
 
 def nm_gammaln(n):
-    return math.log(abs(math.factorial(n-1)))
+    return math.log(abs(math.factorial(n - 1)))
 
 
 def random_normalized_vector(n):
@@ -145,8 +145,8 @@ class MultinomialMixture:
             log_likelihood = self.log_likelihood(log_probabilities)
 
             # normalize the log posteriors
-            log_probabilities -= np_logsumexp(log_probabilities)
-            probabilities = nm_exp(log_probabilities)
+            log_probabilities -= np_logsumexp(log_probabilities, axis=0)
+            probabilities = np.exp(log_probabilities)
 
             # Verbose statements from the TAs
             if self.verbose:
@@ -160,17 +160,19 @@ class MultinomialMixture:
             self.lambda_value = counts2 / self.a
             self.beta_matrix = counts1 / counts1.sum(axis=1).reshape((self.n_clusters, 1))
 
-            # Verbose statements from the TAs
-            if self.verbose:
-                print np.array(self.intermediate_data)
+        # Verbose statements from the TAs
+        if self.verbose:
+            print np.array(self.intermediate_data)
 
     def log_likelihood(self, log_probabilities):
-        log_factorial_matrix = nm_log(nm_factorial(self.count_vectors))
+        # NUMPY VERSION, OLD STILL WORKS SO LEAVE THIS COMMENTED
         a = nm_add_scalar(self.log_factorial_n, log_probabilities)
-        b = nm_subtract(a, nm_sum_transpose(log_factorial_matrix))
+        log_factorial_vector = np.log(nm_factorial(self.count_vectors)).sum(axis=1)
+        b = a - log_factorial_vector
+        return np_logsumexp(b, axis=0).sum()
 
-        return np_logsumexp(b).sum()
-
-
-if __name__ == '__main__':
-    MultinomialMixture()
+        # log_factorial_matrix = nm_log(nm_factorial(self.count_vectors))
+        # a = nm_add_scalar(self.log_factorial_n, log_probabilities)
+        # b = nm_subtract(a, nm_sum_transpose(log_factorial_matrix))
+        #
+        # return np_logsumexp(b).sum()
