@@ -2,3 +2,4 @@ data
 sample
 .idea
 *.pyc
+.DS_Store

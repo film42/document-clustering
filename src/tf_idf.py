@@ -28,6 +28,10 @@ def is_punctuation(s):
     return all(c in string.punctuation for c in s)
 
 
+def has_others(s):
+    return ('.' in s) or ('\'' in s)
+
+
 class TFIDF:
     def __init__(self):
         self.weighted = False
@@ -39,7 +43,7 @@ class TFIDF:
         doc_dict = {}
         for w in TextBlob(unicode(text, errors='ignore')).words:
 
-            if is_punctuation(w) or has_numbers(w) or len(w) < 2:
+            if is_punctuation(w) or has_numbers(w) or has_others(w) or len(w) < 2:
                 continue
 
             doc_dict[w] = doc_dict.get(w, 0) + 1
@@ -55,7 +59,7 @@ class TFIDF:
         """
         corpus_size = len(self.corpus_dict)
         weighted_documents = {}
-        pool = []
+        pool = {}
         # Get the top N weighted words from a document
         for document, words in self.documents:
             document_weighted_words = {}
@@ -74,13 +78,16 @@ class TFIDF:
 
             # Create pool for each document
             for word, count in take(n, sort_dict(document_weighted_words)):
-                pool.append(word)
+                pool[word] = True
 
         # Filter document to only contain words found in the pool
+        print "Pool size: %d" % len(pool)
         for document, words in self.documents:
+            print "Working on document: %s" % document
+
             weighted_documents[document] = []
             for word, count in words.iteritems():
-                if word in pool:
+                if pool.get(word, False):
                     weighted_documents[document].append(word)
 
         return weighted_documents
