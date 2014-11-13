@@ -34,6 +34,10 @@ def np_logsumexp(a, axis=None, b=None):
     return out
 
 
+def nm_gammaln(n):
+    return math.log(abs(math.factorial(n-1)))
+
+
 def random_normalized_vector(n):
     frequency_vector = [randint(1, 100) for _ in range(0, n)]
     sum_of_frequencies = sum(frequency_vector)
@@ -99,7 +103,7 @@ class MultinomialMixture:
 
         # Huh?
         self.n = sum(self.count_vectors[0])
-        self.log_factorial_n = math.log(abs(math.factorial(self.n)))
+        self.log_factorial_n = nm_gammaln(self.n + 1)
 
         if lambda_values:
             self.lambda_value = np.array(lambda_values)
