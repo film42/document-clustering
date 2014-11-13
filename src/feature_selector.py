@@ -82,3 +82,7 @@ class FeatureSelector:
                 for word in words:
                     f.write(word)
                     f.write("\n")
+
+
+if __name__ == '__main__':
+    FeatureSelector().run()
