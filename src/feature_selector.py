@@ -1,13 +1,12 @@
 import os
 from tf_idf import TFIDF
-
+from confusion_matrix import ConfusionMatrix as cm
 
 class BuildModel:
     def __init__(self, path):
         self.path = path
         self.corpus = {}
         self.documents = {}
-
         self.import_features()
 
     def load_feature(self, name, words):
@@ -43,8 +42,10 @@ class BuildModel:
             for corpus_word in self.corpus.keys():
                 # Count the number of times the word in the corpus occurs in the document
                 count_vector[corpus_word] = words.count(corpus_word)
-            # Save the corpus vector
+            # Save the count vector
             count_vectors.append(count_vector.values())
+            #add it to the confusion matrix
+            cm.add_data(count_vector, document)
 
         return count_vectors
 

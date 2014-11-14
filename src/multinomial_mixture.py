@@ -1,6 +1,7 @@
 from random import randint
 import numpy as np
 import math
+from confusion_matrix import ConfusionMatrix as cm
 
 np.set_printoptions(suppress=True, precision=4)
 np.set_printoptions(threshold=np.nan, linewidth=10000)
@@ -164,6 +165,7 @@ class MultinomialMixture:
         # Verbose statements from the TAs
         if self.verbose:
             for array in np.array(self.intermediate_data):
+                # I think this is where we can say cm.add_observation(...) (see method for a description)
                 # print: it# lambda b1 ... bn
                 print array[:2 + self.n_clusters]
 
