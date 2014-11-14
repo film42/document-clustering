@@ -69,7 +69,7 @@ class FeatureSelector:
                 with open("../data/groups/%s" % document_name, 'r') as f:
                     self.table.add_document(document_name, f.read().lower())
 
-        new_data_set = self.table.top_n_words(5)
+        new_data_set = self.table.top_n_words(3)
         for document_name, words in new_data_set.iteritems():
 
             directory_name, file_name = document_name.split('/')

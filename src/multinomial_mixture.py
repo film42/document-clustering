@@ -3,6 +3,7 @@ import numpy as np
 import math
 
 np.set_printoptions(suppress=True, precision=4)
+np.set_printoptions(threshold=np.nan, linewidth=10000)
 
 """
 These methods are util replacements for numpy methods or numpy methods themselves (from source).
@@ -98,7 +99,7 @@ class MultinomialMixture:
         self.n_clusters = n_clusters
         self.n_iterations = n_iterations
         self.verbose = verbose
-        self.a, self.b = self.count_vectors.shape
+        self.degree, self.b = self.count_vectors.shape
 
         # Huh?
         self.n = sum(self.count_vectors[0])
@@ -150,28 +151,29 @@ class MultinomialMixture:
             # Verbose statements from the TAs
             if self.verbose:
                 self.intermediate_data.append(
-                    np.hstack((i, self.lambda_value[0], self.beta_matrix[:, 0], probabilities[0], log_likelihood)))
+                    np.hstack((i + 1, self.lambda_value[0], self.beta_matrix[:, 0], probabilities[0], log_likelihood)))
 
             # get expected count totals
-            counts1, counts2 = self.expected_count_totals(probabilities)
+            beta_counts, lambda_counts = self.expected_count_totals(probabilities)
 
             # estimate new parameters
-            self.lambda_value = counts2 / self.a
-            self.beta_matrix = counts1 / counts1.sum(axis=1).reshape((self.n_clusters, 1))
+            self.lambda_value = self.estimate_lambda(lambda_counts)
+            self.beta_matrix = self.estimate_beta_matrix(beta_counts)
 
         # Verbose statements from the TAs
         if self.verbose:
-            print np.array(self.intermediate_data)
+            for array in np.array(self.intermediate_data):
+                # print: it# lambda b1 ... bn
+                print array[:2 + self.n_clusters]
+
+    def estimate_lambda(self, counts):
+        return counts / self.degree
+
+    def estimate_beta_matrix(self, counts):
+        return (counts + 1) / (counts.sum(axis=1).reshape((self.n_clusters, 1)) + self.vocabulary_size)
 
     def log_likelihood(self, log_probabilities):
-        # NUMPY VERSION, OLD STILL WORKS SO LEAVE THIS COMMENTED
         a = nm_add_scalar(self.log_factorial_n, log_probabilities)
         log_factorial_vector = np.log(nm_factorial(self.count_vectors)).sum(axis=1)
         b = a - log_factorial_vector
         return np_logsumexp(b, axis=0).sum()
-
-        # log_factorial_matrix = nm_log(nm_factorial(self.count_vectors))
-        # a = nm_add_scalar(self.log_factorial_n, log_probabilities)
-        # b = nm_subtract(a, nm_sum_transpose(log_factorial_matrix))
-        #
-        # return np_logsumexp(b).sum()

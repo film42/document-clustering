@@ -38,7 +38,7 @@ class Main:
                          [3., 0.],
                          [0., 3.],
                          [3., 0.]]
-        mm = MultinomialMixture(2, count_vectors, n_iterations=4, verbose=True, beta_matrix=beta_matrix,
+        mm = MultinomialMixture(2, count_vectors, n_iterations=10, verbose=True, beta_matrix=beta_matrix,
                                 lambda_values=lambda_values)
         mm.learn_parameters()
 
@@ -46,9 +46,9 @@ class Main:
         """
         This is for assignment 6, the data is from 20 news groups
         """
-        model = BuildModel("../sample/features")
+        model = BuildModel("../data/features")
         count_vectors = model.count_vectors()
-        mm = MultinomialMixture(20, count_vectors, n_iterations=4, verbose=True)
+        mm = MultinomialMixture(20, count_vectors, n_iterations=25, verbose=True)
         mm.learn_parameters()
 
 
