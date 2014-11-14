@@ -48,7 +48,7 @@ class Main:
         """
         model = BuildModel("../data/features")
         count_vectors = model.count_vectors()
-        mm = MultinomialMixture(20, count_vectors, n_iterations=25, verbose=True)
+        mm = MultinomialMixture(20, count_vectors, n_iterations=25, verbose=True, smoothing=True)
         mm.learn_parameters()
 
 

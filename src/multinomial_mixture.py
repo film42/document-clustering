@@ -92,13 +92,14 @@ The Multinomial Mixture model section implements the EM algorithm generically
 
 class MultinomialMixture:
     def __init__(self, n_clusters, count_vectors, n_iterations=None, verbose=False, lambda_values=None,
-                 beta_matrix=None):
+                 beta_matrix=None, smoothing=False):
 
         self.count_vectors = np.array(count_vectors)
         self.vocabulary_size = len(count_vectors[0])
         self.n_clusters = n_clusters
         self.n_iterations = n_iterations
         self.verbose = verbose
+        self.smoothing = smoothing
         self.degree, self.b = self.count_vectors.shape
 
         # Huh?
@@ -170,7 +171,12 @@ class MultinomialMixture:
         return counts / self.degree
 
     def estimate_beta_matrix(self, counts):
-        return (counts + 1) / (counts.sum(axis=1).reshape((self.n_clusters, 1)) + self.vocabulary_size)
+        denominator = counts.sum(axis=1).reshape((self.n_clusters, 1))
+        if self.smoothing:
+            counts += 1
+            denominator += self.vocabulary_size
+
+        return counts / denominator
 
     def log_likelihood(self, log_probabilities):
         a = nm_add_scalar(self.log_factorial_n, log_probabilities)
