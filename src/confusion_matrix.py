@@ -1,6 +1,4 @@
-
 class ConfusionMatrix:
-
 
     def __init__(self, n_clusters):
 
@@ -8,7 +6,7 @@ class ConfusionMatrix:
         self.n_clusters = n_clusters
 
         #initializing the matrix with 0's
-        self.matrix = [[0 for x in xrange(len(self.n_clusters))] for x in xrange(len(self.n_clusters))]
+        self.matrix = [[0 for _ in xrange(len(self.n_clusters))] for _ in xrange(len(self.n_clusters))]
 
     def add_data(self, count_vector, label):
         """
@@ -16,14 +14,12 @@ class ConfusionMatrix:
         """
         self.doc_labels[count_vector] = label
 
-
     def add_observation(self, count_vector, cluster):
         """
         increments the cell in the matrix of the corresponding [count_vector, cluster] where cluster is the index of the
         mode of the betas for that row
         """
-        
-
+        pass
 
     def calc_accuracy(self):
         t = sum(sum(l) for l in self.matrix)

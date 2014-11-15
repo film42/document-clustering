@@ -167,7 +167,9 @@ class MultinomialMixture:
             for array in np.array(self.intermediate_data):
                 # I think this is where we can say cm.add_observation(...) (see method for a description)
                 # print: it# lambda b1 ... bn
-                print array[:2 + self.n_clusters]
+                # print array[:2 + self.n_clusters]
+                # print: it# log_likelihood
+                print [array[0], array[-1]]
 
     def estimate_lambda(self, counts):
         return counts / self.degree

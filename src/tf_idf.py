@@ -1,9 +1,3 @@
-"""
->> SOURCE: https://github.com/hrs/python-tf-idf
-
-Heavily modified since source in purpose and code
-
-"""
 import math
 import string
 import operator
