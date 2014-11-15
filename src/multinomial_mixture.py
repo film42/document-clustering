@@ -1,7 +1,6 @@
 from random import randint
 import numpy as np
 import math
-from confusion_matrix import ConfusionMatrix
 
 np.set_printoptions(suppress=True, precision=4)
 np.set_printoptions(threshold=np.nan, linewidth=10000)
@@ -93,7 +92,7 @@ The Multinomial Mixture model section implements the EM algorithm generically
 
 class MultinomialMixture:
     def __init__(self, n_clusters, count_vectors, n_iterations=None, verbose=False, lambda_values=None,
-                 beta_matrix=None, smoothing=False):
+                 beta_matrix=None, smoothing=False, confusion_matrix=None, document_types=None):
 
         self.count_vectors = np.array(count_vectors)
         self.vocabulary_size = len(count_vectors[0])
@@ -102,11 +101,11 @@ class MultinomialMixture:
         self.verbose = verbose
         self.smoothing = smoothing
         self.degree, self.b = self.count_vectors.shape
+        self.document_types = document_types
 
         # Create the confusion matrix
-        self.confusion_matrix = ConfusionMatrix(self.n_clusters)
+        self.confusion_matrix = confusion_matrix
 
-        # Huh?
         self.n = sum(self.count_vectors[0])
         self.log_factorial_n = nm_gammaln(self.n + 1)
 
@@ -133,7 +132,7 @@ class MultinomialMixture:
         """
         Generate a beta matrix given the number of clusters and data size
         """
-        return [random_normalized_vector(self.vocabulary_size) for _ in range(0, self.n_clusters)]
+        return [random_normalized_vector(self.vocabulary_size) for _ in xrange(self.n_clusters)]
 
     def log_joint_probabilities(self):
         a = np.log(self.lambda_value).reshape((self.n_clusters, 1))
@@ -169,11 +168,13 @@ class MultinomialMixture:
         if self.verbose:
             for array in np.array(self.intermediate_data):
                 # I think this is where we can say cm.add_observation(...) (see method for a description)
-                self.confusion_matrix.add_observation([], "com.test")
                 # print: it# lambda b1 ... bn
                 # print array[:2 + self.n_clusters]
                 # print: it# log_likelihood
                 print [array[0], array[-1]]
+
+        # Run the Cluster Assignment
+        self.assign_to_clusters()
 
     def estimate_lambda(self, counts):
         return counts / self.degree
@@ -191,3 +192,19 @@ class MultinomialMixture:
         log_factorial_vector = np.log(nm_factorial(self.count_vectors)).sum(axis=1)
         b = a - log_factorial_vector
         return np_logsumexp(b, axis=0).sum()
+
+    def assign_to_clusters(self):
+        for document_index in xrange(len(self.count_vectors)):
+            document = self.count_vectors[document_index]
+            cluster_probabilities = []
+            for cluster_index in xrange(self.n_clusters):
+                # Find the probability of each cluster
+                probability = 1.
+                for index in xrange(len(document)):
+                    probability *= self.beta_matrix[cluster_index][index] or 1
+                cluster_probabilities.append(probability)
+
+            # Get the max cluster is its 'index + 1'
+            max_cluster = cluster_probabilities.index(max(cluster_probabilities)) + 1
+            # print max_cluster
+            self.confusion_matrix.add_observation(self.document_types[document_index], max_cluster)

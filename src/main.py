@@ -1,5 +1,6 @@
 from feature_selector import BuildModel
 from multinomial_mixture import MultinomialMixture
+from confusion_matrix import ConfusionMatrix
 
 
 class Main:
@@ -48,8 +49,11 @@ class Main:
         """
         model = BuildModel("../data/features")
         count_vectors = model.count_vectors()
-        mm = MultinomialMixture(20, count_vectors, n_iterations=30, verbose=True, smoothing=True)
+        cm = ConfusionMatrix(labels=model.labels)
+        mm = MultinomialMixture(20, count_vectors, n_iterations=4, verbose=True, smoothing=True, confusion_matrix=cm,
+                                document_types=model.document_types)
         mm.learn_parameters()
+        cm.print_matrix()
 
 
 if __name__ == "__main__":

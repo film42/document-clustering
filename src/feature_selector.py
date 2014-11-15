@@ -1,6 +1,6 @@
 import os
 from tf_idf import TFIDF
-from confusion_matrix import ConfusionMatrix as cm
+
 
 class BuildModel:
     def __init__(self, path):
@@ -8,6 +8,7 @@ class BuildModel:
         self.corpus = {}
         self.documents = {}
         self.import_features()
+        self.document_types = []
 
     def load_feature(self, name, words):
         # Save document
@@ -15,6 +16,19 @@ class BuildModel:
         # Save the words for counting later
         for word in words:
             self.corpus[word] = self.corpus.get(word, 0) + 1
+
+    @property
+    def labels(self):
+        labels = []
+        directory_listing = os.listdir(self.path)
+        for dir_name in directory_listing:
+            # Skip nasty dot files
+            if dir_name[0] == '.':
+                continue
+            labels.append(dir_name)
+
+        # Return the labels list
+        return labels
 
     def import_features(self):
         # First import all features
@@ -44,8 +58,9 @@ class BuildModel:
                 count_vector[corpus_word] = words.count(corpus_word)
             # Save the count vector
             count_vectors.append(count_vector.values())
-            #add it to the confusion matrix
-            cm.add_data(count_vector, document)
+            # Save the document type
+            document_type = document.split("/")[0]
+            self.document_types.append(document_type)
 
         return count_vectors
 

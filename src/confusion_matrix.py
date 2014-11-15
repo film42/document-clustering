@@ -1,26 +1,42 @@
-class ConfusionMatrix:
+import sys
 
-    def __init__(self, n_clusters):
+
+class ConfusionMatrix:
+    def __init__(self, labels):
 
         self.doc_labels = {}
-        self.n_clusters = n_clusters
+        self.labels = labels
+        self.cluster_labels = range(1, len(labels) + 1)
+        self.n_clusters = len(labels)
 
-        #initializing the matrix with 0's
-        self.matrix = [[0 for _ in xrange(len(self.n_clusters))] for _ in xrange(len(self.n_clusters))]
+        # Initializing the matrix with 0's
+        self.matrix = []
+        for i in xrange(self.n_clusters):
+            self.matrix.append([0 for _ in xrange(self.n_clusters)])
 
-    def add_data(self, count_vector, label):
+    def add_observation(self, label, cluster_label):
         """
-        stores the label and the count vector which gives us the correct labeling
+        Increments the count of an observation at [label][cluster]
         """
-        self.doc_labels[count_vector] = label
+        label_index = self.labels.index(label)
+        cluster_index = cluster_label - 1
+        self.matrix[label_index][cluster_index] += 1
 
-    def add_observation(self, count_vector, cluster):
-        """
-        increments the cell in the matrix of the corresponding [count_vector, cluster] where cluster is the index of the
-        mode of the betas for that row
-        """
-        pass
+    def accuracy(self):
+        numerator = sum(self.matrix[i][i] for i in range(len(self.matrix)))
+        denominator = sum(sum(row) for row in self.matrix)
+        return numerator / float(denominator)
 
-    def calc_accuracy(self):
-        t = sum(sum(l) for l in self.matrix)
-        return sum(self.matrix[i][i] for i in range(len(self.matrix))) / t
+    def print_matrix(self):
+        for label_index in xrange(len(self.matrix)):
+            # Print the label
+            label = self.labels[label_index]
+            sys.stdout.write("%s%s" % (label, " " * (28 - len(label))))
+            # Print the row
+            for count_index in xrange(len(self.matrix[label_index])):
+                sys.stdout.write("%d  " % self.matrix[label_index][count_index])
+            sys.stdout.write("\n")
+
+        print "Accuracy %f" % self.accuracy()
+
+
