@@ -1,7 +1,7 @@
 from random import randint
 import numpy as np
 import math
-from confusion_matrix import ConfusionMatrix as cm
+from confusion_matrix import ConfusionMatrix
 
 np.set_printoptions(suppress=True, precision=4)
 np.set_printoptions(threshold=np.nan, linewidth=10000)
@@ -103,6 +103,9 @@ class MultinomialMixture:
         self.smoothing = smoothing
         self.degree, self.b = self.count_vectors.shape
 
+        # Create the confusion matrix
+        self.confusion_matrix = ConfusionMatrix(self.n_clusters)
+
         # Huh?
         self.n = sum(self.count_vectors[0])
         self.log_factorial_n = nm_gammaln(self.n + 1)
@@ -166,6 +169,7 @@ class MultinomialMixture:
         if self.verbose:
             for array in np.array(self.intermediate_data):
                 # I think this is where we can say cm.add_observation(...) (see method for a description)
+                self.confusion_matrix.add_observation([], "com.test")
                 # print: it# lambda b1 ... bn
                 # print array[:2 + self.n_clusters]
                 # print: it# log_likelihood
